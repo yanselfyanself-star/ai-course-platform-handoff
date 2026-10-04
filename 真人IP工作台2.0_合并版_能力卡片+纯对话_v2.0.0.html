@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>真人IP工作台2.0 · 合并版 能力卡片首页+纯对话流 v2.0.0</title>
+<style>
+  :root{
+    --orange:#FF7A45; --blue:#2E8BFF; --yellow:#FFC53D;
+    --bg:#FFFBF7; --ink:#1F2233; --ink2:#5b6172; --line:#ece3d8; --card:#ffffff;
+    --soft:#FFF4EA; --shadow:0 8px 30px rgba(31,34,51,.07);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+  .app{display:flex;height:100vh}
+  /* sidebar */
+  .side{width:216px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px}
+  .brand{font-weight:700;color:var(--orange);font-size:15px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .brand b{background:var(--orange);color:#fff;border-radius:8px;padding:2px 8px;font-size:13px}
+  .side nav a{display:block;padding:9px 12px;border-radius:9px;color:var(--ink2);font-size:13px;margin-bottom:4px;cursor:pointer}
+  .side nav a:hover{background:var(--soft)}
+  .side .bot{margin-top:auto;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+  .side .bot a{font-size:12px;color:var(--ink2);padding:7px 12px;border-radius:9px;cursor:pointer}
+  /* main */
+  .main{flex:1;display:flex;flex-direction:column;background:var(--bg);min-width:0}
+  .topbar{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--line);background:#fff}
+  .topbar .name{font-weight:600}
+  .ver{font-size:11px;background:#eef4ff;color:var(--blue);border-radius:6px;padding:2px 8px}
+  .topbar .right{margin-left:auto;display:flex;gap:8px}
+  .iconbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--ink2)}
+  .iconbtn:hover{border-color:var(--orange);color:var(--orange)}
+  /* home = capability card grid */
+  .home{flex:1;overflow:auto;padding:44px}
+  .home h2{margin:0 0 6px;font-size:22px}
+  .home p.lead{color:var(--ink2);margin:0 0 28px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;max-width:1040px}
+  .cap{border:1px solid var(--line);border-radius:16px;padding:26px 20px;background:#fff;cursor:pointer;box-shadow:var(--shadow);transition:.18s}
+  .cap:hover{transform:translateY(-4px);border-color:var(--orange)}
+  .cap .em{font-size:32px}
+  .cap h3{margin:12px 0 4px;font-size:17px}
+  .cap small{color:var(--ink2);font-size:13px}
+  .cap .go{margin-top:14px;color:var(--orange);font-size:13px;font-weight:600}
+  /* chat view */
+  .chat{flex:1;overflow:auto;padding:24px 10%;display:flex;flex-direction:column;gap:14px}
+  .chat .back{color:var(--blue);font-size:13px;cursor:pointer;margin-bottom:4px}
+  .msg{max-width:78%;border-radius:14px;padding:12px 14px;font-size:14px;animation:fade .25s ease}
+  .msg.u{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:4px}
+  .msg.a{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px;box-shadow:var(--shadow)}
+  .msg.a .opt{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .opt button{border:1px solid var(--orange);background:var(--soft);color:#a8430f;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;transition:.15s}
+  .opt button:hover{background:var(--orange);color:#fff}
+  .rcard{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fafcff}
+  .rcard h5{margin:0 0 6px;font-size:13px;color:var(--blue)}
+  .rcard .meta{font-size:12px;color:var(--ink2)}
+  .prog{margin-top:10px;font-size:12px;color:var(--ink2);background:#fff;border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+  .prog b{color:#1a9d54}
+  .composer{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--line);background:#fff}
+  .composer input{flex:1;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14px;outline:none}
+  .composer input:focus{border-color:var(--orange)}
+  .composer button{background:var(--orange);color:#fff;border:none;border-radius:12px;padding:0 20px;font-weight:600;cursor:pointer}
+  /* settings slide-in */
+  .scrim{position:fixed;inset:0;background:rgba(31,34,51,.35);display:none;z-index:40}
+  .scrim.on{display:block}
+  .settings{position:fixed;top:0;right:0;height:100%;width:360px;background:#fff;box-shadow:-8px 0 30px rgba(31,34,51,.15);transform:translateX(100%);transition:.25s;z-index:50;padding:20px;overflow:auto}
+  .settings.on{transform:none}
+  .settings h3{margin:0 0 14px}
+  .settings .grp{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  .settings .grp h4{margin:0 0 8px;font-size:13px;color:var(--orange)}
+  .settings label{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin:6px 0;align-items:center}
+  .settings input{flex:1;margin-left:10px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px}
+  .closex{float:right;cursor:pointer;color:var(--ink2);font-size:18px}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(31,34,51,.4);display:none;align-items:center;justify-content:center;z-index:60}
+  .modal.on{display:flex}
+  .modal .box{background:#fff;border-radius:16px;width:520px;max-width:92vw;max-height:84vh;overflow:auto;padding:24px;box-shadow:var(--shadow)}
+  .modal .box h3{margin:0 0 12px}
+  .modal .qa{font-size:13px;color:var(--ink2);margin:8px 0}
+  .modal .qa b{color:var(--ink)}
+  /* newbie */
+  .intro{position:fixed;inset:0;background:rgba(31,34,51,.55);display:flex;align-items:center;justify-content:center;z-index:70}
+  .intro .box{background:#fff;border-radius:18px;width:560px;max-width:92vw;padding:28px;box-shadow:var(--shadow)}
+  .intro h2{margin:0 0 6px;color:var(--orange)}
+  .intro p{color:var(--ink2);font-size:14px}
+  .intro .steps{display:flex;gap:10px;margin:16px 0}
+  .intro .st{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;font-size:12px}
+  .intro .st b{display:block;color:var(--blue);font-size:15px;margin-bottom:4px}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:80;display:none}
+  .toast.on{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><b>点津</b> 真人IP工作台</div>
+    <nav>
+      <a onclick="goHome()">🏠 首页能力</a>
+      <a onclick="toast('历史记录：可回溯任意成片继续编辑。')">🕘 历史记录</a>
+      <a onclick="toast('声音库：你的克隆声音 + 现成音色都在这里。')">🎙 我的声音</a>
+      <a onclick="toast('形象库：上传视频即可注册你的数字人形象。')">🧑 我的形象</a>
+      <a onclick="toast('素材库：真人视频 / 照片 / 风景，做片时直接调用。')">🗂 素材库</a>
+    </nav>
+    <div class="bot">
+      <a onclick="openSettings()">⚙ 设置（藏）</a>
+      <a onclick="openHelp()">？ 帮助（藏）</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="name" id="projName">孩子专注力训练 · 口播视频</span>
+      <span class="ver">v2.0.0</span>
+      <div class="right">
+        <button class="iconbtn" onclick="openAbout()">关于</button>
+        <button class="iconbtn" onclick="openHelp()">帮助</button>
+      </div>
+    </div>
+
+    <!-- HOME: capability card grid -->
+    <div class="home" id="home">
+      <h2>我能帮你做什么</h2>
+      <p class="lead">点一张能力卡，AI 就一步步带你走完，你只管点选项。</p>
+      <div class="grid">
+        <div class="cap" onclick="startFlow('video')"><div class="em">🎬</div><h3>做口播视频</h3><small>一条龙出片</small><div class="go">开始 →</div></div>
+        <div class="cap" onclick="startFlow('extract')"><div class="em">📋</div><h3>提取文案</h3><small>视频号 / 抖音 / 小红书</small><div class="go">开始 →</div></div>
+        <div class="cap" onclick="startFlow('clone')"><div class="em">🎙</div><h3>克隆我的声音</h3><small>上传一段音频</small><div class="go">开始 →</div></div>
+        <div class="cap" onclick="startFlow('write')"><div class="em">✍️</div><h3>AI 写文案</h3><small>给个标题就写</small><div class="go">开始 →</div></div>
+      </div>
+    </div>
+
+    <!-- CHAT view -->
+    <div class="chat" id="chat" style="display:none">
+      <div class="back" onclick="goHome()">← 返回能力首页</div>
+    </div>
+    <div class="composer" id="composer" style="display:none">
+      <input id="inp" placeholder="说句话，或试试输入：设置 / 帮助 / 关于 / 新手引导 / 口型">
+      <button onclick="send()">发送</button>
+    </div>
+  </div>
+</div>
+
+<!-- settings -->
+<div class="scrim" id="scrim" onclick="closeSettings()"></div>
+<div class="settings" id="settings">
+  <span class="closex" onclick="closeSettings()">×</span>
+  <h3>设置（AI 可帮设）</h3>
+  <div class="grp"><h4>引擎</h4>
+    <label>口型渲染 <input value="KrLongAI · 35005"></label>
+    <label>配音引擎 <input value="IndexTTS2 · 本地"></label>
+    <label>字幕合成 <input value="ffmpeg · 本地"></label>
+  </div>
+  <div class="grp"><h4>API</h4>
+    <label>DeepSeek Key <input type="password" value="sk-••••••••"></label>
+    <label>模型 <input value="deepseek-chat"></label>
+  </div>
+  <div class="grp"><h4>资产库</h4>
+    <label>声音库 <input value="我的声音 / 马莉 / 赵老师"></label>
+    <label>形象库 <input value="阎先生 / 马老师"></label>
+  </div>
+  <div class="grp"><h4>参数</h4>
+    <label>默认分辨率 <input value="720×1280 竖屏"></label>
+    <label>超分辨率 <input value="关（防脸皮抖动）"></label>
+  </div>
+  <p style="font-size:12px;color:var(--ink2)">提示：直接问 AI「把配音换成我的声音」「口型用哪个引擎」，AI 替你改。</p>
+</div>
+
+<!-- help -->
+<div class="modal" id="help"><div class="box">
+  <h3>帮助（对话式）</h3>
+  <div class="qa"><b>怎么设置配音？</b><br>在对话框说「帮我把声音换成我的」，AI 直接帮你改。</div>
+  <div class="qa"><b>视频号文案怎么提取？</b><br>粘贴文案给我，或发链接（抖音/小红书自动提取）。</div>
+  <div class="qa"><b>口型渲染支持风景吗？</b><br>纯风景不渲染口型，只配乐；单主体真人才做口型驱动。</div>
+  <div class="qa"><b>多音字怎么修？</b><br>配音后点「多音字修正」，字级拼音标注，你确认即可。</div>
+  <button class="iconbtn" onclick="closeHelp()">关闭</button>
+</div></div>
+
+<!-- about -->
+<div class="modal" id="about"><div class="box">
+  <h3>关于 点津·真人IP工作台</h3>
+  <p style="color:var(--ink2)">产品名：真人IP工作台2.0<br>版本：v2.0.0（2026-10-03）<br>定位：真人驱动的数字人视频生产工具<br>版权：© 2026 点津智能</p>
+  <button class="iconbtn" onclick="closeAbout()">关闭</button>
+</div></div>
+
+<!-- newbie intro -->
+<div class="intro" id="intro"><div class="box">
+  <h2>👋 我是你的 AI 制片助手</h2>
+  <p>真人IP工作台帮你一条龙做口播视频。点一张能力卡，我一步步带你走，你只管点选项。</p>
+  <div class="steps">
+    <div class="st"><b>1</b>点能力卡</div>
+    <div class="st"><b>2</b>我一步步问，你点选项</div>
+    <div class="st"><b>3</b>结果卡片化，一键出片</div>
+  </div>
+  <button class="opt" style="border:none;background:var(--orange);color:#fff;padding:10px 18px;border-radius:10px;cursor:pointer" onclick="closeIntro()">开始体验</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const chat=document.getElementById('chat');
+const home=document.getElementById('home');
+const composer=document.getElementById('composer');
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),1800);}
+function goHome(){home.style.display='block';chat.style.display='none';composer.style.display='none';}
+function enterChat(){home.style.display='none';chat.style.display='flex';composer.style.display='flex';}
+function bubble(cls,html){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=html;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d;}
+function aiSays(text,optsHtml){let h='<div>'+text+'</div>';if(optsHtml)h+='<div class="opt">'+optsHtml+'</div>';return bubble('a',h);}
+function meSays(t){bubble('u',t);}
+function card(title,meta){return '<div class="rcard"><h5>'+title+'</h5><div class="meta">'+meta+'</div></div>';}
+function prog(t){bubble('a','<div class="prog">'+t+'</div>');}
+
+function startFlow(kind){
+  enterChat();
+  chat.innerHTML='<div class="back" onclick="goHome()">← 返回能力首页</div>';
+  if(kind==='video')videoFlow();
+  else if(kind==='extract'){aiSays('提取文案：把视频号/抖音/小红书链接发我，或直接粘贴文案。', '<button onclick="meSays(\'粘贴了一段文案\');bubble(\'a\',card(\'📋 提取卡片\',\'已转写整理 268 字 · 去口语冗余\'))">✅ 用这段</button>');}
+  else if(kind==='clone'){aiSays('克隆声音：上传一段 ≥10 秒清晰人声即可。', '<button onclick="meSays(\'已上传\');bubble(\'a\',card(\'🧬 克隆卡片\',\'VoiceModel 已落库：我的声音 v1\'))">✅ 克隆</button>');}
+  else{aiSays('AI 写文案：给我个主题或标题。', '<button onclick="meSays(\'孩子专注力训练\');bubble(\'a\',card(\'✍️ 文案卡片\',\'已生成：标题 + 钩子 + 口语化三件套\'))">✨ 生成</button>');}
+}
+
+function videoFlow(){
+  aiSays('好，做一条口播视频。第一步 · 文案：从哪来？',
+    '<button onclick="stepCopy(\'链接提取\')">🔗 链接提取</button><button onclick="stepCopy(\'上传文档\')">📄 上传文档</button><button onclick="stepCopy(\'AI 生成\')">✨ AI 生成</button>');
+}
+function stepCopy(choice){
+  meSays(choice);
+  if(choice==='链接提取')aiSays('把视频号/抖音/小红书链接发我，或粘贴文案～', '<button onclick="stepCopy2()">✅ 用这段文案</button>');
+  else if(choice==='上传文档')aiSays('已收到文档，提取正文成功。', '<button onclick="stepCopy2()">✅ 继续</button>');
+  else aiSays('已用 DeepSeek 生成口播稿（标题优化 + 钩子 + 口语化三件套已应用）。', '<button onclick="stepCopy2()">✅ 满意，继续</button>');
+}
+function stepCopy2(){
+  meSays('继续');
+  bubble('a',card('📝 文案卡片','标题：孩子写作业拖拉？3 个专注力训练法 · 268 字 · 钩子✓ 口语化✓'));
+  prog('已完成：<b>① 文案 ✓</b> ｜ 正在做：② 配音…');
+  aiSays('第二步 · 配音：用哪个声音？',
+    '<button onclick="stepVoice(\'我的声音\')">🧬 我的声音</button><button onclick="stepVoice(\'马莉声音\')">🎙 马莉声音</button><button onclick="stepVoice(\'赵老师\')">🗣 赵老师</button>');
+}
+function stepVoice(v){
+  meSays(v);
+  if(v==='我的声音')aiSays('请上传一段 ≥10s 清晰人声，我帮你克隆（演示：克隆完成，落 VoiceModel）。', '<button onclick="stepVoice2()">✅ 克隆完成</button>');
+  else aiSays('已选用 '+v+'，生成配音试听如下。', '<button onclick="stepVoice2()">▶ 试听 / 确认</button>');
+}
+function stepVoice2(){
+  meSays('确认');
+  bubble('a',card('🎙 配音卡片','声音：我的声音 · 时长 38.6s · 已试听确认'));
+  aiSays('需要多音字修正吗？（字级拼音标注，你确认即可）', '<button onclick="stepPoly()">✓ 修正</button><button onclick="stepPolySkip()">跳过</button>');
+}
+function stepPoly(){meSays('修正');bubble('a',card('🔤 多音字修正','银行(háng) / 重(zhòng)要 已标注，待你确认'));stepScene();}
+function stepPolySkip(){meSays('跳过');stepScene();}
+function stepScene(){
+  prog('已完成：<b>① 文案 ✓ ② 配音 ✓</b> ｜ 正在做：③ 画面口型…');
+  aiSays('第三步 · 画面：上传的是？单主体真人才做口型渲染，纯风景不渲染。',
+    '<button onclick="stepRender(\'真人视频·渲染\')">🎥 真人视频（口型）</button><button onclick="stepRender(\'照片·渲染\')">🖼 照片（口型）</button><button onclick="stepRender(\'风景·不渲染\')">🌄 风景（仅配乐）</button>');
+}
+function stepRender(s){
+  meSays(s);
+  if(s.indexOf('不渲染')>=0)bubble('a',card('🌄 画面卡片','纯风景：仅配乐，不做口型渲染'));
+  else bubble('a',card('🎥 画面卡片','形象：vid_2026 · 口型渲染中（引擎预热已就绪）'));
+  prog('已完成：<b>① 文案 ✓ ② 配音 ✓ ③ 画面 ✓</b> ｜ 正在做：④ 字幕…');
+  aiSays('第四步 · 字幕与包装：要哪些？',
+    '<button onclick="stepSub(\'字幕\')">🈶 字幕</button><button onclick="stepSub(\'PPT\')">📊 PPT叠加</button><button onclick="stepSub(\'PIP\')">📺 画中画</button><button onclick="stepSub(\'文生图\')">🎨 文生图</button>');
+}
+function stepSub(k){
+  meSays('加'+k);
+  bubble('a',card('🈶 '+k+'卡片','已应用：'+k+'（上暖下蓝实体字幕样式）'));
+  prog('已完成：<b>①②③④ ✓</b> ｜ 正在做：⑤ 出片…');
+  aiSays('第五步 · 出片：导出设置？',
+    '<button onclick="stepExport(\'720×1280 竖屏\')">📱 720×1280 竖屏</button><button onclick="stepExport(\'1080×1920\')">📺 1080×1920</button>');
+}
+function stepExport(r){
+  meSays(r);
+  bubble('a',card('🎬 成片卡片','《孩子写作业拖拉》· '+r+' · MP4(h264+aac) · 真实渲染进度 100%'));
+  prog('🎉 <b>全部完成！</b> 成片已生成，可在「历史记录」回溯继续编辑。');
+  toast('成片已生成');
+}
+
+function openSettings(){document.getElementById('settings').classList.add('on');document.getElementById('scrim').classList.add('on');}
+function closeSettings(){document.getElementById('settings').classList.remove('on');document.getElementById('scrim').classList.remove('on');}
+function openHelp(){document.getElementById('help').classList.add('on');}
+function closeHelp(){document.getElementById('help').classList.remove('on');}
+function openAbout(){document.getElementById('about').classList.add('on');}
+function closeAbout(){document.getElementById('about').classList.remove('on');}
+function closeIntro(){document.getElementById('intro').classList.remove('on');}
+
+function send(){const v=document.getElementById('inp').value.trim();if(!v)return;document.getElementById('inp').value='';meSays(v);
+  const k=v.toLowerCase();
+  if(k.includes('设置')||k.includes('set')){openSettings();aiSays('已为你打开设置。也可以直接告诉我「把配音换成我的声音」，我来改。','');}
+  else if(k.includes('帮助')||k.includes('help')||k.includes('怎么'))openHelp();
+  else if(k.includes('关于')||k.includes('about')||k.includes('版本'))openAbout();
+  else if(k.includes('新手')||k.includes('引导')){document.getElementById('intro').classList.add('on');}
+  else if(k.includes('口型')||k.includes('渲染')){aiSays('口型渲染走 KrLongAI（单主体真人）。要开始吗？','<button onclick="stepScene()">🎥 开始</button>');}
+  else if(k.includes('做视频')||k.includes('口播'))videoFlow();
+  else aiSays('收到。你可以点返回能力首页选能力卡，或直接说「做口播视频 / 提取文案 / 克隆声音 / 写文案」，我一步步带你。','');
+}
+</script>
+</body>
+</html>

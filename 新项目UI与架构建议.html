@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>真人IP工作台 · 新项目 UI 设计稿与架构/技术建议</title>
+<style>
+  :root{
+    --orange:#FF7A45; --blue:#2E8BFF; --yellow:#FFC53D;
+    --bg:#FFFBF7; --ink:#1F2233; --ink2:#5b6172; --line:#ece3d8;
+    --card:#ffffff; --soft:#fff4ea;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+  header.top{background:linear-gradient(90deg,var(--orange),var(--yellow));color:#fff;padding:14px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20}
+  header.top .logo{font-weight:700;font-size:18px;letter-spacing:.5px}
+  header.top .sub{font-size:12px;opacity:.92}
+  .tabs{display:flex;gap:8px;padding:12px 24px 0;background:var(--bg);position:sticky;top:52px;z-index:15;border-bottom:1px solid var(--line)}
+  .tabs button{border:none;background:transparent;padding:10px 18px;font-size:14px;color:var(--ink2);cursor:pointer;border-radius:10px 10px 0 0;font-weight:500}
+  .tabs button.active{color:var(--orange);background:var(--card);box-shadow:0 -2px 0 var(--orange) inset}
+  .pane{display:none;padding:24px;max-width:1180px;margin:0 auto}
+  .pane.active{display:block}
+  h2{font-size:20px;margin:0 0 6px}
+  h3{font-size:16px;margin:22px 0 10px;color:var(--blue)}
+  p.lead{color:var(--ink2);margin:0 0 16px}
+  .note{background:var(--soft);border-left:4px solid var(--orange);padding:12px 16px;border-radius:8px;margin:14px 0;color:#7a3a14}
+  .warn{background:#fff7e6;border-left:4px solid var(--yellow);padding:12px 16px;border-radius:8px;margin:14px 0;color:#8a5b00}
+
+  /* ===== Mockup frame ===== */
+  .app{display:flex;height:560px;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(31,34,51,.06)}
+  .side{width:230px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px}
+  .side .brand{font-weight:700;color:var(--orange);font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .side .brand b{background:var(--orange);color:#fff;border-radius:8px;padding:2px 8px;font-size:13px}
+  .side .new{background:var(--orange);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;cursor:pointer;margin-bottom:14px;font-weight:600}
+  .side nav a{display:block;padding:9px 12px;border-radius:9px;color:var(--ink2);text-decoration:none;font-size:13px;margin-bottom:4px}
+  .side nav a.active{background:var(--soft);color:var(--orange);font-weight:600}
+  .side .me{margin-top:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);border-top:1px solid var(--line);padding-top:10px}
+  .side .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:4px}
+  .main{flex:1;display:flex;flex-direction:column;background:var(--bg)}
+  .main .bar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);background:#fff;flex-wrap:wrap}
+  .pill{padding:5px 12px;border-radius:20px;font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink2);cursor:pointer}
+  .pill.cur{background:var(--orange);color:#fff;border-color:var(--orange)}
+  .pill.done{background:#e8f6ee;color:#1a9d54;border-color:#bfe9cf}
+  .chat{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+  .msg{border-radius:12px;padding:12px 14px;max-width:78%;font-size:13px}
+  .msg.u{align-self:flex-end;background:var(--blue);color:#fff}
+  .msg.a{align-self:flex-start;background:#fff;border:1px solid var(--line)}
+  .pipe{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .pipe .st{flex:1;min-width:90px;border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;font-size:12px;background:#fff}
+  .pipe .st b{display:block;color:var(--ink)}
+  .pipe .st small{color:var(--ink2)}
+  .pipe .st.on{border-color:var(--orange);background:var(--soft)}
+  .input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);background:#fff}
+  .input input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;outline:none}
+  .input button{background:var(--orange);color:#fff;border:none;border-radius:10px;padding:0 18px;font-weight:600;cursor:pointer}
+
+  /* stage detail */
+  .stage{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:14px}
+  .stage h4{margin:0 0 12px;font-size:14px;color:var(--ink)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:none;background:#fff;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--ink2)}
+  .seg button.on{background:var(--orange);color:#fff}
+  .field{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink2);min-width:220px}
+  .field input,.field select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--ink)}
+  .btn{background:var(--blue);color:#fff;border:none;border-radius:9px;padding:9px 16px;font-size:13px;cursor:pointer;font-weight:600}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink2)}
+  .chip{display:inline-block;background:var(--soft);border:1px solid #ffd9c2;color:#a8430f;border-radius:16px;padding:5px 12px;font-size:12px;margin:3px}
+  .voice{display:flex;gap:10px}
+  .vcard{flex:1;border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;font-size:12px}
+  .vcard .play{margin-top:8px;background:var(--soft);border:1px solid #ffd9c2;color:#a8430f;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}
+  .drop{border:2px dashed #ffc8a8;border-radius:12px;padding:26px;text-align:center;color:var(--ink2);font-size:13px;background:#fffaf5}
+  .toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px}
+  .toggle .sw{width:42px;height:24px;border-radius:14px;background:var(--line);position:relative;cursor:pointer}
+  .toggle .sw::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s}
+  .toggle .sw.on{background:var(--orange)}
+  .toggle .sw.on::after{left:21px}
+
+  /* architecture */
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(31,34,51,.05);margin:10px 0 20px}
+  th,td{border:1px solid var(--line);padding:10px 12px;font-size:13px;text-align:left;vertical-align:top}
+  th{background:var(--soft);color:#7a3a14;font-weight:600}
+  td code{background:#fff4ea;padding:1px 6px;border-radius:5px;font-size:12px}
+  .stack{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 18px}
+  .stack .col{flex:1;min-width:240px;border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff}
+  .stack .col h4{margin:0 0 8px;font-size:14px}
+  .stack .col ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink2)}
+  svg.diagram{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px;margin:6px 0 18px}
+
+  footer{text-align:center;color:var(--ink2);font-size:12px;padding:24px}
+  .tag{display:inline-block;background:#eef4ff;color:var(--blue);border-radius:6px;padding:2px 8px;font-size:12px;margin-right:6px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">点津 · 真人IP工作台</div>
+  <div class="sub">新项目需求探讨 · UI 设计稿 + 架构 / 技术选型建议（仅讨论稿，供甲方评审）</div>
+</header>
+
+<div class="tabs">
+  <button class="active" data-pane="ui">① UI 设计稿（可点击）</button>
+  <button data-pane="arch">② 架构拆分建议</button>
+  <button data-pane="tech">③ 技术选型建议</button>
+  <button data-pane="decide">④ 待甲方拍板的决策</button>
+</div>
+
+<!-- ===================== UI ===================== -->
+<section class="pane active" id="ui">
+  <h2>界面设计稿：对话式工作区 + 左侧导航</h2>
+  <p class="lead">参考 Hermes / ChatGPT 的对话式骨架，叠加剪映/腾讯智影的“流程进度条”心智。下方为可点击高保真原型——点上方 5 个环节药丸可切换右侧详情面板。</p>
+
+  <div class="app">
+    <aside class="side">
+      <div class="brand"><b>点津</b> 真人IP工作台</div>
+      <button class="new">＋ 新建一条视频</button>
+      <nav>
+        <a class="active" href="#">💬 对话工作区</a>
+        <a href="#">🎙 我的声音</a>
+        <a href="#">🧑 我的形象</a>
+        <a href="#">🗂 素材库</a>
+        <a href="#">🕘 历史记录</a>
+        <a href="#">⚙ 设置（藏起来）</a>
+      </nav>
+      <div class="me"><span><span class="dot"></span>引擎在线</span> · 阎先生</div>
+    </aside>
+
+    <div class="main">
+      <div class="bar">
+        <span style="font-weight:600;font-size:13px">马莉学习能力 · 第12期</span>
+        <span class="pill done" data-stage="0">①文案 ✓</span>
+        <span class="pill cur" data-stage="1">②配音</span>
+        <span class="pill" data-stage="2">③画面</span>
+        <span class="pill" data-stage="3">④字幕</span>
+        <span class="pill" data-stage="4">⑤出片</span>
+      </div>
+
+      <div class="chat" id="chat">
+        <div class="msg u">帮我把这条视频号爆款改写成马莉口播，配上我的声音和数字人出片。</div>
+        <div class="msg a">
+          已为你规划 5 步流水线，点击下方环节可逐环节操作：
+          <div class="pipe">
+            <div class="st on"><b>① 文案</b><small>改写完成</small></div>
+            <div class="st"><b>② 配音</b><small>选声/克隆</small></div>
+            <div class="st"><b>③ 画面</b><small>口型渲染</small></div>
+            <div class="st"><b>④ 字幕</b><small>包装</small></div>
+            <div class="st"><b>⑤ 出片</b><small>合成</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input">
+        <input placeholder="描述需求，或 @文案 @配音 @画面 @字幕 @出片 直接进入环节…">
+        <button>发送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- stage detail -->
+  <div id="stageDetail"></div>
+
+  <div class="note">交互要点：用户始终在“对话框”里用自然语言驱动；每个环节既能被对话触发，也能从顶部进度药丸手动进入。设置刻意下沉到侧栏底部，符合“设置藏起来”的既定方向。手感上对齐 ChatGPT（对话为主）＋ 剪映（环节进度条）＋ 智影（左侧资产/形象库）。</div>
+</section>
+
+<!-- ===================== ARCH ===================== -->
+<section class="pane" id="arch">
+  <h2>架构拆分建议：5 环节 → 模块 / 前后端分工</h2>
+  <p class="lead">沿用 v2 已落地的“引擎无关”接缝（<code>EngineRegistry.pick(capability)</code> + <code>EngineAdapter</code>），换引擎只改 Provider 配置，不碰业务层。前端只负责“收集参数 + 展示状态”，重活全在后端与引擎层。</p>
+
+  <svg class="diagram" viewBox="0 0 1000 230">
+    <defs>
+      <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#2E8BFF"/>
+      </marker>
+    </defs>
+    <rect x="20" y="60" width="160" height="70" rx="12" fill="#FFF4EA" stroke="#FF7A45"/>
+    <text x="100" y="88" text-anchor="middle" font-size="14" fill="#1F2233" font-weight="700">① 文案生成</text>
+    <text x="100" y="108" text-anchor="middle" font-size="11" fill="#5b6172">copy / extract</text>
+
+    <rect x="230" y="60" width="160" height="70" rx="12" fill="#FFF4EA" stroke="#FF7A45"/>
+    <text x="310" y="88" text-anchor="middle" font-size="14" fill="#1F2233" font-weight="700">② 配音克隆</text>
+    <text x="310" y="108" text-anchor="middle" font-size="11" fill="#5b6172">tts / voice</text>
+
+    <rect x="440" y="60" width="160" height="70" rx="12" fill="#FFF4EA" stroke="#FF7A45"/>
+    <text x="520" y="88" text-anchor="middle" font-size="14" fill="#1F2233" font-weight="700">③ 画面口型</text>
+    <text x="520" y="108" text-anchor="middle" font-size="11" fill="#5b6172">lipsync</text>
+
+    <rect x="650" y="60" width="160" height="70" rx="12" fill="#FFF4EA" stroke="#FF7A45"/>
+    <text x="730" y="88" text-anchor="middle" font-size="14" fill="#1F2233" font-weight="700">④ 字幕包装</text>
+    <text x="730" y="108" text-anchor="middle" font-size="11" fill="#5b6172">compositor</text>
+
+    <rect x="860" y="60" width="120" height="70" rx="12" fill="#FFF4EA" stroke="#FF7A45"/>
+    <text x="920" y="88" text-anchor="middle" font-size="14" fill="#1F2233" font-weight="700">⑤ 出片</text>
+    <text x="920" y="108" text-anchor="middle" font-size="11" fill="#5b6172">pipeline</text>
+
+    <line x1="180" y1="95" x2="228" y2="95" stroke="#2E8BFF" marker-end="url(#ar)"/>
+    <line x1="390" y1="95" x2="438" y2="95" stroke="#2E8BFF" marker-end="url(#ar)"/>
+    <line x1="600" y1="95" x2="648" y2="95" stroke="#2E8BFF" marker-end="url(#ar)"/>
+    <line x1="810" y1="95" x2="858" y2="95" stroke="#2E8BFF" marker-end="url(#ar)"/>
+
+    <rect x="20" y="160" width="960" height="40" rx="10" fill="#eef4ff" stroke="#2E8BFF"/>
+    <text x="500" y="185" text-anchor="middle" font-size="12" fill="#2E8BFF">引擎层（可插拔 Provider）：DeepSeek · IndexTTS2(克隆) · KrLongAI(口型) · ffmpeg(字幕/合成) —— 全部经 EngineRegistry 接入口，零硬编码</text>
+  </svg>
+
+  <h3>前后端分工</h3>
+  <div class="stack">
+    <div class="col">
+      <h4>前端（React + TS + Vite）</h4>
+      <ul>
+        <li>对话式工作区、左侧导航、环节进度药丸</li>
+        <li>各环“参数收集表单”（链接输入、声音选择、上传、字幕样式开关…）</li>
+        <li>轮询后端任务状态，渲染真实进度（严禁假绿）</li>
+        <li>成片预览、声音试听、时间轴剪辑 UI</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h4>后端（FastAPI + SQLAlchemy）</h4>
+      <ul>
+        <li>5 环节业务编排（pipeline 状态机）</li>
+        <li>Provider/Adapter 接缝：引擎注册、健康检查、submit/status/cancel</li>
+        <li>资产落盘（data_home，绝不写死盘符）</li>
+        <li>DeepSeek 文案、链接提取、克隆、口型、合成 的接口与事务守卫</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h4>引擎层（外部进程 / HTTP 黑盒）</h4>
+      <ul>
+        <li>DeepSeek API（文案生成）</li>
+        <li>IndexTTS2（配音 + 声音克隆，V1 已验证）</li>
+        <li>KrLongAI 35005（口型渲染，契约已固化）</li>
+        <li>ffmpeg（字幕、PIP、合成导出）</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>模块拆分表（含 v2 现状，迁移不重造）</h3>
+  <table>
+    <tr><th>环节</th><th>前端组件</th><th>后端模块</th><th>引擎 / Provider</th><th>v2 现状</th></tr>
+    <tr><td>① 文案</td><td><code>CopyEditor</code></td><td><code>copy.py</code> + <code>extract.py</code></td><td>DeepSeek Provider</td><td>接口预留，待建（按 Provider 抽象接入）</td></tr>
+    <tr><td>② 配音克隆</td><td><code>VoicePanel</code></td><td><code>tts.py</code> + <code>voice.py</code></td><td>IndexTTS2 + 克隆</td><td>V1 已真机验证，经 v2 TTS/Voice Provider 接入</td></tr>
+    <tr><td>③ 画面口型</td><td><code>RenderPanel</code></td><td><code>engines/lipsync.py</code></td><td>KrLongAI (LIPSYNC)</td><td>引擎无关适配器已就绪；需补 2 处差距（见技术选型）</td></tr>
+    <tr><td>④ 字幕包装</td><td><code>SubtitlePanel</code></td><td><code>compositor</code> overlays</td><td>ffmpeg drawtext</td><td>已建（M7：overlay/字幕/PIP 接口可用）</td></tr>
+    <tr><td>⑤ 出片</td><td><code>ExportPanel</code></td><td><code>pipeline._compose</code></td><td>ffmpeg</td><td>已建（合成导出 + 事务守卫）</td></tr>
+  </table>
+</section>
+
+<!-- ===================== TECH ===================== -->
+<section class="pane" id="tech">
+  <h2>技术选型建议（具体落地，免费优先）</h2>
+
+  <h3>1. 文案生成 —— DeepSeek API</h3>
+  <p>走 v2 已有的 <code>EngineRegistry</code> 接缝，把 DeepSeek 当一个“文案 Provider”接：<b>base_url + api_key 写进 Provider.config_json，绝不硬编码</b>；未配置时自动降级到“本地规则改写/手动编辑”，保证离线也能用。提示词模板沉淀为可编辑资产（标题优化、钩子库、口播口语化三件套）。</p>
+
+  <h3>2. 链接提取 —— 视频号 / 抖音 / 小红书（免费优先）</h3>
+  <table>
+    <tr><th>平台</th><th>推荐方案</th><th>成本</th><th>说明</th></tr>
+    <tr><td>抖音 / 小红书</td><td><code>yt-dlp</code> 下载视频 → 本地 <code>Whisper</code> 转写文案</td><td>免费开源</td><td>公开 Web 可抓；注意频率与平台 ToS，做本地限速</td></tr>
+    <tr><td>视频号</td><td>粘贴文案 + 本地 Whisper 转写（用户既定决策）</td><td>免费</td><td>视频号封闭，自动化提取不稳；走“粘贴 + 本地转写”插件式自研</td></tr>
+  </table>
+  <div class="note">原则：免费优先、本地优先、不依赖厂商网关。转写统一走本地 Whisper，与“链接提取去厂商化”项目一致。</div>
+
+  <h3>3. 声音克隆 + 多音字 —— 直接复用 V1 已验证资产</h3>
+  <p>V1 真机验证过的链路不要重造：<code>POST /api/voice/clone</code>（body <code>{"prompt_audio": "本地路径"}</code>）→ IndexTTS2 → 落 <code>VoiceModel</code> → 返回 <code>voice_id</code>；之后 TTS 以 <code>voice_id</code> 引用。<b>多音字修正保留 V1 能力</b>（字级拼音标注 + 人工/规则校对），这是甲方明确要求的硬功能。迁移方式：经 v2 的 TTS/Voice Provider 接入，复用既有接口。</p>
+
+  <h3>4. 口型渲染 —— KrLongAI（契约已固化，照抄 v1）</h3>
+  <p>直接按 <code>docs/research/KrLongAI渲染契约.md</code> 经 v2 <code>LIPSYNC</code> Provider 接入。v2 <code>engines/lipsync.py</code> 当前是“引擎无关通用适配器”，已兼容 <code>urlData</code> 与嵌套 <code>data.data</code> 进度解析，只需补 <b>2 处差距</b>：</p>
+  <table>
+    <tr><th>差距</th><th>要改什么</th></tr>
+    <tr><td>① 提交 body 字段映射</td><td>把通用 body 改为 KrLongAI 契约：<code>audio_file</code> / <code>type:"sync"</code> / <code>meta_human_name:"vid_{id}.mp4"</code>（必带 .mp4）/ <code>video_file_name</code> / <code>use_super_resolution:false</code> / <code>batch_size:8</code>；<code>code!=0</code> 即拒</td></tr>
+    <tr><td>② 算法就绪前置</td><td>提交前调 <code>POST /algorithm/start/</code>（body <code>{"type":"video_sync"}</code>）并轮询 <code>GET /algorithm/status/</code> 直到 <code>video_sync_status=="open"</code>，否则会 <code>code:-1</code></td></tr>
+  </table>
+  <div class="warn">⚠ 决策冲突：此前战略定过“KrLongAI 保持不动（Q3/Q4 不处理，核心渲染厂商不动）”。而本次新需求明确“口型渲染走 KrLongAI”。这是方向级冲突，需甲方拍板（见④）。</div>
+</section>
+
+<!-- ===================== DECIDE ===================== -->
+<section class="pane" id="decide">
+  <h2>待甲方拍板的决策点</h2>
+  <div class="warn">
+    <p><b>决策 1：口型渲染是否正式启用 KrLongAI？</b><br>
+    新需求要求“影像说话”走 KrLongAI，但此前战略说“核心渲染厂商保持不动”。若启用，需补 2 处适配器差距（约 1~2 天，非重造）；若维持不动，则“单主体真人数字人”核心卖点无法落地。请阎先生/PM Hermes 确认。</p>
+  </div>
+  <div class="note">
+    <p><b>决策 2：视频号提取走“粘贴+本地 Whisper”还是投入自动化抓取？</b><br>
+    自动化在视频号上不稳且易触发风控；本地粘贴+Whisper 免费、合规、已是你方既定决策。建议维持本地方案，把精力放在抖音/小红书（yt-dlp 可用）。</p>
+  </div>
+  <div class="note">
+    <p><b>决策 3：5 环节是否一次性全做，还是按 M 里程碑分期？</b><br>
+    建议分期：M-A 先把“对话 UI + ①文案 + ②配音克隆”跑通（资产已具备）；M-B 再补“③口型（待决策1）+ ④字幕 + ⑤出片”。每期都真机验证，杜绝假绿。</p>
+  </div>
+
+  <h3>红线遵守声明</h3>
+  <p><span class="tag">只讨论</span><span class="tag">不动代码</span><span class="tag">不建项目</span><span class="tag">不碰 v1 生产数据</span> 本稿为评审用建议，未修改任何生产代码、未创建项目、未触碰 v1 资料夹。所有技术结论均引用 v1 真机验证过的契约与 v2 已落地接缝，非空话。</p>
+
+  <h3>关于“设计/原型插件”</h3>
+  <p>本环境无独立 UI 原型类插件，已用内置 mockup 能力直接产出这份<b>可点击 HTML 高保真稿</b>（甲方可直接在浏览器打开评审、圈注）。若需导出 Figma/蓝湖标准稿，可后续补充。</p>
+</section>
+
+<footer>点津 · 真人IP工作台 — 新项目需求探讨稿 · 仅供甲方评审 · 生成于本地，零盘符硬编码</footer>
+
+<script>
+  // top-level tabs
+  document.querySelectorAll('.tabs button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById(b.dataset.pane).classList.add('active');
+    };
+  });
+
+  // stage detail content
+  const stages = [
+    { // ① 文案
+      title:'① 文案生成',
+      body:`
+        <div class="seg"><button class="on">链接提取</button><button>直接上传</button><button>AI 生成</button></div>
+        <div class="row" style="margin-top:12px">
+          <div class="field">平台
+            <select><option>视频号（粘贴+本地Whisper）</option><option>抖音（yt-dlp）</option><option>小红书（yt-dlp）</option></select>
+          </div>
+          <div class="field" style="flex:2">链接 / 文案
+            <input placeholder="粘贴视频号文案，或输入抖音/小红书链接">
+          </div>
+          <button class="btn" style="align-self:flex-end">提取文案</button>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:2">AI 改写主题
+            <input placeholder="如：孩子写作业拖拉，3 个专注力训练法">
+          </div>
+          <div class="field">模型
+            <select><option>DeepSeek（已接 Provider）</option><option>本地规则（离线降级）</option></select>
+          </div>
+          <button class="btn" style="align-self:flex-end">生成口播稿</button>
+        </div>
+        <div><span class="chip">标题优化建议</span><span class="chip">钩子库</span><span class="chip">口播口语化</span><span class="chip">字数统计</span></div>`
+    },
+    { // ② 配音
+      title:'② 配音与声音克隆',
+      body:`
+        <div class="voice">
+          <div class="vcard">马老师<div class="play">▶ 试听</div></div>
+          <div class="vcard">赵老师<div class="play">▶ 试听</div></div>
+          <div class="vcard">我的声音（阎先生）<div class="play">▶ 试听</div></div>
+        </div>
+        <div class="drop" style="margin-top:12px">拖入参考音频（≥10s 清晰人声）自动克隆 → 落 VoiceModel</div>
+        <div class="row" style="margin-top:12px;align-items:center">
+          <span class="toggle"><span class="sw on"></span> 多音字修正（保留 V1 能力）</span>
+          <button class="btn ghost">打开拼音校对</button>
+        </div>
+        <div style="font-size:12px;color:var(--ink2)">示例：<b>银行(háng)</b> 行(xíng)走 · <b>重(zhòng)</b>要 重(chóng)复 —— 字级标注后人工确认</div>`
+    },
+    { // ③ 画面
+      title:'③ 画面与口型渲染',
+      body:`
+        <div class="drop">上传真人视频 / 照片 / 风景素材（单主体真人才口型渲染，纯风景仅配乐不渲染）</div>
+        <div class="row" style="margin-top:12px;align-items:center">
+          <span class="toggle"><span class="sw on"></span> 单主体真人 → 口型渲染（KrLongAI）</span>
+        </div>
+        <div class="row" style="align-items:center">
+          <div class="field">绑定形象
+            <select><option>vid_2026（阎先生）</option><option>vid_ma（马老师）</option></select>
+          </div>
+          <span class="toggle"><span class="sw"></span> 超分辨率（建议关，防脸皮抖动）</span>
+        </div>
+        <button class="btn" style="margin-top:6px">开始渲染</button>`
+    },
+    { // ④ 字幕
+      title:'④ 字幕与视觉包装',
+      body:`
+        <div class="row" style="align-items:center">
+          <span class="toggle"><span class="sw on"></span> 字幕（上暖下蓝·实体字幕）</span>
+          <span class="toggle"><span class="sw"></span> PPT 叠加</span>
+          <span class="toggle"><span class="sw"></span> 画中画 PIP</span>
+        </div>
+        <div class="row" style="margin-top:12px;align-items:center">
+          <div class="field">文生图（封面/转场）
+            <input placeholder="如：专注力训练孩子插画风">
+          </div>
+          <button class="btn">生成</button>
+        </div>
+        <div class="drop" style="margin-top:8px">字幕样式预览：上栏暖奶油 / 下栏品牌蓝，描边深墨，微软雅黑粗体</div>`
+    },
+    { // ⑤ 出片
+      title:'⑤ 剪辑与出片',
+      body:`
+        <div class="drop">时间轴：文案→配音→画面→字幕 四轨已对齐，可拖拽微调</div>
+        <div class="row" style="margin-top:12px">
+          <div class="field">分辨率
+            <select><option>720×1280（竖屏 9:16）</option><option>544×960</option><option>1080×1920</option></select>
+          </div>
+          <div class="field">格式
+            <select><option>MP4 (h264+aac)</option></select>
+          </div>
+          <button class="btn" style="align-self:flex-end">导出成片</button>
+        </div>
+        <div style="font-size:12px;color:var(--ink2)">导出进度：真实速率显示，含 ffmpeg 合成日志，严禁假绿</div>`
+    }
+  ];
+
+  function showStage(i){
+    document.getElementById('stageDetail').innerHTML =
+      `<div class="stage"><h4>${stages[i].title} · 环节详情（原型）</h4>${stages[i].body}</div>`;
+    // sync pills
+    document.querySelectorAll('.pill').forEach(p=>p.classList.remove('cur'));
+    const pill=document.querySelector('.pill[data-stage="'+i+'"]'); if(pill) pill.classList.add('cur');
+  }
+  // pill clicks switch stage + ensure UI pane active
+  document.querySelectorAll('.pill').forEach(p=>{
+    p.onclick=()=>{
+      document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.pane').forEach(pp=>pp.classList.remove('active'));
+      document.querySelector('.tabs button[data-pane="ui"]').classList.add('active');
+      document.getElementById('ui').classList.add('active');
+      showStage(+p.dataset.stage);
+      document.getElementById('ui').scrollIntoView({behavior:'smooth'});
+    };
+  });
+  showStage(1); // default to ②配音 as in the mockup header
+</script>
+</body>
+</html>

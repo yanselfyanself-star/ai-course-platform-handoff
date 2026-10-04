@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>真人IP工作台2.0 · 原型C 看板+对话 v2.0.0</title>
+<style>
+  :root{
+    --orange:#FF7A45; --blue:#2E8BFF; --yellow:#FFC53D;
+    --bg:#FFFBF7; --ink:#1F2233; --ink2:#5b6172; --line:#ece3d8; --card:#ffffff; --soft:#FFF4EA;
+    --shadow:0 8px 30px rgba(31,34,51,.07);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+  .app{display:flex;height:100vh}
+  .side{width:220px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px}
+  .brand{font-weight:700;color:var(--orange);font-size:15px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .brand b{background:var(--orange);color:#fff;border-radius:8px;padding:2px 8px;font-size:13px}
+  .side nav a{display:block;padding:9px 12px;border-radius:9px;color:var(--ink2);font-size:13px;margin-bottom:4px;cursor:pointer}
+  .side nav a:hover{background:var(--soft)}
+  .side .bot{margin-top:auto;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+  .side .bot a{font-size:12px;color:var(--ink2);padding:7px 12px;border-radius:9px;cursor:pointer}
+  .main{flex:1;display:flex;flex-direction:column;background:var(--bg)}
+  .topbar{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--line);background:#fff}
+  .topbar .name{font-weight:600}
+  .ver{font-size:11px;background:#eef4ff;color:var(--blue);border-radius:6px;padding:2px 8px}
+  .topbar .right{margin-left:auto;display:flex;gap:8px}
+  .iconbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--ink2)}
+  .iconbtn:hover{border-color:var(--orange);color:var(--orange)}
+  .board{flex:1;display:flex;gap:14px;padding:20px;overflow:auto}
+  .col{flex:1;min-width:180px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+  .col .hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .col .hd .n{width:24px;height:24px;border-radius:50%;background:var(--soft);color:#a8430f;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .col .hd h4{margin:0;font-size:14px}
+  .col .badge{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:10px;background:#eee;color:var(--ink2)}
+  .col .badge.done{background:#e8f6ee;color:#1a9d54}
+  .col .badge.doing{background:#fff0e6;color:#a8430f}
+  .col .item{font-size:12px;color:var(--ink2);border:1px solid var(--line);border-radius:9px;padding:8px;margin-bottom:7px}
+  .col .item b{color:var(--ink)}
+  .col .act{margin-top:auto;border:none;background:var(--orange);color:#fff;border-radius:10px;padding:9px;font-size:13px;cursor:pointer;font-weight:600}
+  .col .act.ghost{background:#fff;border:1px solid var(--line);color:var(--ink2)}
+  /* chat dock */
+  .dock{width:340px;background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;transition:.2s}
+  .dock.off{margin-right:-340px}
+  .dock .ttl{padding:12px 16px;border-bottom:1px solid var(--line);font-weight:600;font-size:13px;display:flex;align-items:center}
+  .dock .ttl .tg{margin-left:auto;cursor:pointer;color:var(--blue);font-size:12px}
+  .dock .chat{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:82%;border-radius:14px;padding:10px 13px;font-size:13px}
+  .msg.u{align-self:flex-end;background:var(--blue);color:#fff}
+  .msg.a{align-self:flex-start;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .msg.a .opt{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+  .opt button{border:1px solid var(--orange);background:var(--soft);color:#a8430f;border-radius:18px;padding:6px 12px;font-size:12px;cursor:pointer}
+  .opt button:hover{background:var(--orange);color:#fff}
+  .rcard{margin-top:9px;border:1px solid var(--line);border-radius:11px;padding:10px;background:#fafcff}
+  .rcard h5{margin:0 0 5px;font-size:12px;color:var(--blue)}
+  .rcard .meta{font-size:11px;color:var(--ink2)}
+  .dock .cin{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px}
+  .dock .cin input{flex:1;border:1px solid var(--line);border-radius:9px;padding:9px;font-size:13px}
+  .dock .cin button{background:var(--orange);color:#fff;border:none;border-radius:9px;padding:0 14px;font-weight:600;cursor:pointer}
+  /* wizard overlay (stage detail) */
+  .scrim{position:fixed;inset:0;background:rgba(31,34,51,.4);display:none;align-items:center;justify-content:center;z-index:50}
+  .scrim.on{display:flex}
+  .wiz{background:#fff;border-radius:16px;width:560px;max-width:92vw;max-height:86vh;overflow:auto;padding:22px}
+  .wiz h3{margin:0 0 12px}
+  .wiz .wc{display:flex;flex-direction:column;gap:12px}
+  /* settings/help/about/newbie */
+  .settings{position:fixed;top:0;right:0;height:100%;width:360px;background:#fff;box-shadow:-8px 0 30px rgba(31,34,51,.15);transform:translateX(100%);transition:.25s;z-index:60;padding:20px;overflow:auto}
+  .settings.on{transform:none}.settings h3{margin:0 0 14px}
+  .settings .grp{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  .settings .grp h4{margin:0 0 8px;font-size:13px;color:var(--orange)}
+  .settings label{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin:6px 0;align-items:center}
+  .settings input{flex:1;margin-left:10px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px}
+  .closex{float:right;cursor:pointer;color:var(--ink2);font-size:18px}
+  .modal{position:fixed;inset:0;background:rgba(31,34,51,.4);display:none;align-items:center;justify-content:center;z-index:60}
+  .modal.on{display:flex}.modal .box{background:#fff;border-radius:16px;width:520px;max-width:92vw;max-height:84vh;overflow:auto;padding:24px}
+  .modal .box h3{margin:0 0 12px}.modal .qa{font-size:13px;color:var(--ink2);margin:8px 0}.modal .qa b{color:var(--ink)}
+  .intro{position:fixed;inset:0;background:rgba(31,34,51,.55);display:flex;align-items:center;justify-content:center;z-index:70}
+  .intro .box{background:#fff;border-radius:18px;width:560px;max-width:92vw;padding:28px}
+  .intro h2{margin:0 0 6px;color:var(--orange)}.intro p{color:var(--ink2)}
+  .intro .steps{display:flex;gap:10px;margin:16px 0}.intro .st{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;font-size:12px}
+  .intro .st b{display:block;color:var(--blue);font-size:15px;margin-bottom:4px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:80;display:none}
+  .toast.on{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><b>点津</b> 真人IP工作台</div>
+    <nav>
+      <a onclick="dockSay('历史记录已打开，可回溯成片继续编辑。')">🕘 历史记录</a>
+      <a onclick="dockSay('声音库：马莉/赵老师/我的声音。')">🎙 我的声音</a>
+      <a onclick="dockSay('形象库：阎先生/马老师。')">🧑 我的形象</a>
+      <a onclick="dockSay('素材库：真人视频/照片/风景。')">🗂 素材库</a>
+    </nav>
+    <div class="bot">
+      <a onclick="openSettings()">⚙ 设置（藏）</a>
+      <a onclick="openHelp()">？ 帮助（藏）</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="name">马莉学习能力 · 第12期</span>
+      <span class="ver">v2.0.0</span>
+      <div class="right"><button class="iconbtn" onclick="openAbout()">关于</button><button class="iconbtn" onclick="openHelp()">帮助</button></div>
+    </div>
+
+    <!-- 5-STAGE KANBAN -->
+    <div class="board" id="board">
+      <div class="col"><div class="hd"><span class="n">①</span><h4>文案</h4><span class="badge done">✓</span></div>
+        <div class="item"><b>三来源</b>：链接/上传/AI</div><div class="item"><b>三件套</b>：标题/钩子/口语化</div>
+        <button class="act ghost" onclick="openWiz('copy')">查看/改</button></div>
+      <div class="col"><div class="hd"><span class="n">②</span><h4>配音</h4><span class="badge done">✓</span></div>
+        <div class="item"><b>选声</b>：马莉/赵老师</div><div class="item"><b>克隆</b>+试听</div><div class="item"><b>多音字</b>修正</div>
+        <button class="act ghost" onclick="openWiz('voice')">查看/改</button></div>
+      <div class="col"><div class="hd"><span class="n">③</span><h4>画面口型</h4><span class="badge doing">进行</span></div>
+        <div class="item"><b>上传</b>：视频/照片/风景</div><div class="item"><b>口型</b>：单主体真人</div>
+        <button class="act" onclick="openWiz('scene')">继续渲染</button></div>
+      <div class="col"><div class="hd"><span class="n">④</span><h4>字幕包装</h4><span class="badge">待</span></div>
+        <div class="item"><b>字幕</b>：实体样式</div><div class="item"><b>PPT/PIP</b>/文生图</div>
+        <button class="act ghost" onclick="openWiz('sub')">去包装</button></div>
+      <div class="col"><div class="hd"><span class="n">⑤</span><h4>出片</h4><span class="badge">待</span></div>
+        <div class="item"><b>时间轴</b>对齐</div><div class="item"><b>导出</b>：分辨率/格式</div>
+        <button class="act ghost" onclick="openWiz('export')">去出片</button></div>
+    </div>
+  </div>
+
+  <!-- CHAT DOCK -->
+  <div class="dock" id="dock">
+    <div class="ttl">💬 对话 Dock（下达需求 / 微调）<span class="tg" onclick="toggleDock()">收起 ›</span></div>
+    <div class="chat" id="dockChat"></div>
+    <div class="cin"><input id="dockInp" placeholder="说需求，或：设置/帮助/关于…" onkeydown="if(event.key==='Enter')dockSend()"><button onclick="dockSend()">发</button></div>
+  </div>
+</div>
+
+<!-- STAGE WIZARD OVERLAY -->
+<div class="scrim" id="scrim"><div class="wiz">
+  <span class="closex" onclick="closeWiz()">×</span>
+  <h3 id="wizTitle">环节向导</h3>
+  <div class="wc" id="wizBody"></div>
+</div></div>
+
+<!-- settings -->
+<div class="settings" id="settings"><span class="closex" onclick="closeSettings()">×</span><h3>设置（AI 可帮设）</h3>
+  <div class="grp"><h4>引擎</h4><label>口型渲染 <input value="KrLongAI · 35005"></label><label>配音 <input value="IndexTTS2"></label><label>字幕 <input value="ffmpeg"></label></div>
+  <div class="grp"><h4>API</h4><label>DeepSeek Key <input type="password" value="sk-••••"></label><label>模型 <input value="deepseek-chat"></label></div>
+  <div class="grp"><h4>资产库</h4><label>声音库 <input value="马莉/赵老师/我的"></label><label>形象库 <input value="阎先生/马老师"></label></div>
+  <div class="grp"><h4>参数</h4><label>分辨率 <input value="720×1280"></label><label>超分 <input value="关"></label></div>
+</div>
+<div class="modal" id="help"><div class="box"><h3>帮助（对话式）</h3>
+  <div class="qa"><b>怎么设置配音？</b><br>在对话 Dock 说「帮我把声音换成马莉」。</div>
+  <div class="qa"><b>口型渲染支持风景吗？</b><br>纯风景不渲染，只配乐。</div>
+  <div class="qa"><b>多音字怎么修？</b><br>配音后点「多音字修正」。</div>
+  <button class="iconbtn" onclick="closeHelp()">关闭</button></div></div>
+<div class="modal" id="about"><div class="box"><h3>关于 点津·真人IP工作台</h3>
+  <p style="color:var(--ink2)">产品：真人IP工作台2.0<br>版本：v2.0.0（2026-10-03）<br>© 2026 点津智能 · 太原</p>
+  <button class="iconbtn" onclick="closeAbout()">关闭</button></div></div>
+<div class="intro" id="intro"><div class="box"><h2>👋 生产车间式工作台</h2>
+  <p>中间是 5 阶段看板（文案→配音→口型→字幕→出片），进度一眼掌握；右侧对话 Dock 用来下达需求与微调。</p>
+  <div class="steps"><div class="st"><b>1</b>看板总览</div><div class="st"><b>2</b>点阶段做</div><div class="st"><b>3</b>Dock 微调</div></div>
+  <button class="opt" style="border:none;background:var(--orange);color:#fff;padding:10px 18px;border-radius:10px;cursor:pointer" onclick="closeIntro()">开始</button></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const dockChat=document.getElementById('dockChat');
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),1800);}
+function dockSay(t){const d=document.createElement('div');d.className='msg a';d.textContent=t;dockChat.appendChild(d);dockChat.scrollTop=dockChat.scrollHeight;}
+function dockMe(t){const d=document.createElement('div');d.className='msg u';d.textContent=t;dockChat.appendChild(d);dockChat.scrollTop=dockChat.scrollHeight;}
+function wizSay(t,opts){const b=document.getElementById('wizBody');const d=document.createElement('div');d.className='msg a';d.innerHTML='<div>'+t+'</div>'+(opts?'<div class="opt">'+opts+'</div>':'');b.appendChild(d);}
+function wizMe(t){const b=document.getElementById('wizBody');const d=document.createElement('div');d.className='msg u';d.textContent=t;b.appendChild(d);}
+function wizCard(t,m){const b=document.getElementById('wizBody');const d=document.createElement('div');d.className='msg a';d.innerHTML='<div class="rcard"><h5>'+t+'</h5><div class="meta">'+m+'</div></div>';b.appendChild(d);}
+
+function toggleDock(){const d=document.getElementById('dock');d.classList.toggle('off');}
+function dockSend(){const v=document.getElementById('dockInp').value.trim();if(!v)return;document.getElementById('dockInp').value='';dockMe(v);
+  const k=v.toLowerCase();
+  if(k.includes('设置')||k.includes('set')){openSettings();dockSay('已打开设置面板。也可直接告诉我改哪项。');}
+  else if(k.includes('帮助')||k.includes('怎么'))openHelp();
+  else if(k.includes('关于')||k.includes('版本')||k.includes('about'))openAbout();
+  else if(k.includes('口型')||k.includes('渲染'))openWiz('scene');
+  else dockSay('收到，我记下了，会在对应环节帮你处理。');}
+
+// stage wizard overlay
+function openWiz(stage){document.getElementById('wizBody').innerHTML='';
+  const t={copy:'① 文案',voice:'② 配音',scene:'③ 画面口型',sub:'④ 字幕包装',export:'⑤ 出片'};
+  document.getElementById('wizTitle').textContent='向导 · '+t[stage];
+  document.getElementById('scrim').classList.add('on');
+  if(stage==='copy'){wizSay('文案从哪来？',
+    '<button onclick="wizMe(\'链接提取\');wizCard(\'📝 文案\',\'链接提取·268字\')">🔗 链接提取</button><button onclick="wizMe(\'AI生成\');wizCard(\'📝 文案\',\'DeepSeek 生成·三件套\')">✨ AI生成</button>');}
+  else if(stage==='voice'){wizSay('用哪个声音？',
+    '<button onclick="wizMe(\'马莉\');wizCard(\'🎙 配音\',\'马莉·38.6s\')">🎙 马莉</button><button onclick="wizMe(\'克隆\');wizCard(\'🧬 克隆\',\'VoiceModel v1\')">🧬 克隆</button><button onclick="wizCard(\'🔤 多音字\',\'已标注待确认\')">🔤 多音字</button>');}
+  else if(stage==='scene'){wizSay('上传的是？单主体真人才口型渲染。',
+    '<button onclick="wizMe(\'真人视频\');wizCard(\'🎥 画面\',\'形象 vid_2026·渲染中\')">🎥 真人视频</button><button onclick="wizMe(\'风景\');wizCard(\'🌄 画面\',\'仅配乐\')">🌄 风景</button>');}
+  else if(stage==='sub'){wizSay('加哪些包装？',
+    '<button onclick="wizMe(\'字幕\');wizCard(\'🈶 字幕\',\'上暖下蓝\')">🈶 字幕</button><button onclick="wizMe(\'PPT\');wizCard(\'📊 PPT\',\'叠加\')">📊 PPT</button><button onclick="wizMe(\'PIP\');wizCard(\'📺 PIP\',\'画中画\')">📺 PIP</button><button onclick="wizMe(\'文生图\')">🎨 文生图</button>');}
+  else{wizSay('导出设置？',
+    '<button onclick="wizMe(\'720×1280\');wizCard(\'🎬 成片\',\'720×1280·MP4·100%\')">📱 720×1280</button><button onclick="wizMe(\'1080×1920\');wizCard(\'🎬 成片\',\'1080×1920·MP4·100%\')">📺 1080×1920</button>');}
+}
+function closeWiz(){document.getElementById('scrim').classList.remove('on');}
+
+// enterprise widgets
+function openSettings(){document.getElementById('settings').classList.add('on');}
+function closeSettings(){document.getElementById('settings').classList.remove('on');}
+function openHelp(){document.getElementById('help').classList.add('on');}
+function closeHelp(){document.getElementById('help').classList.remove('on');}
+function openAbout(){document.getElementById('about').classList.add('on');}
+function closeAbout(){document.getElementById('about').classList.remove('on');}
+function closeIntro(){document.getElementById('intro').classList.remove('on');dockSay('我在，随时说需求或点看板上的阶段。');}
+// initial dock greeting
+dockSay('👋 我是 AI 制片助手。点中间看板任意阶段，或在下面对我说需求。');
+</script>
+</body>
+</html>

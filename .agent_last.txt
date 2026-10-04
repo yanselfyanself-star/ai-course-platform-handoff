@@ -1,0 +1,21 @@
+# Hermes 派活（下一步）
+
+## 任务：嘴型校正工具接进主链（模块化闭环）
+
+`tools/mouth_landmark_correct.py` 已独立完成（量化指标：抖动 -27.67%、形状偏离 -37.72%），现在把它接进主链，让出片时自动修嘴。
+
+要求：
+1. 做成 POSTFX Adapter：契约同 LipsyncAdapter（health/submit/status），
+   把 mouth_landmark_correct 的核心逻辑（MediaPipe 唇点 → EMA 平滑 → 形状正则化 → RBF/TPS warp）包进去。
+2. pipeline 在口型渲染后、合成前插可选后处理节点，调用 POSTFX Provider。
+3. **换算法只改 Provider**：MediaPipe 只是默认 landmark 后端，可换 insightface/其他，业务代码零改动。
+4. 顺带修一个已知问题：工具 VideoWriter 默认输出 mpeg4（预览器不支持），
+   改成输出 h264（yuv420p + faststart），保证成片/样片可预览。
+
+验收（真机，不假绿）：
+- 主链走一遍，出片自动修嘴（成片含校正后嘴型）
+- 门禁绿 + 零 C 盘零 v1
+- commit + tag + bundle + push 一个不落
+
+红线：留接口（换 landmark 后端/换 warp 算法只改 Provider）、引擎不共置、真机不假绿。
+结束响一声提示音。
