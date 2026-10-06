@@ -103,25 +103,23 @@ ai-course-platform/
 ├── frontend/         # 共享 React UI
 ├── backend/
 │   ├── api/          # HTTP 接口层
+│   ├── src/rpb/      # 既有地基（domain/engines/http/tasks/entries）
 │   ├── domain/       # 领域模型（数据模型）
 │   ├── modules/      # 业务模块
 │   ├── providers/    # 引擎/能力接缝（本地/云端双实现）
 │   ├── workers/      # 任务执行器
 │   ├── render/       # 渲染/合成
 │   ├── storage/      # StorageProvider
+│   ├── tests/        # ⚠️ 测试根（FINDING-B1 裁决：用 backend/tests，非根级 tests/）
 │   └── auth/         # 身份认证
 ├── contracts/        # 接口契约（类型定义）
 ├── modules/labs/     # 实验模块
-├── tests/
-│   ├── unit/         # 单元测试
-│   ├── contract/     # 契约测试
-│   ├── integration/  # 集成测试
-│   ├── golden/       # 黄金流验收
-│   └── s65/          # 产品易用性验收
 ├── fixtures/         # 测试素材
 ├── docs/             # adr / architecture / acceptance
 └── scripts/          # 门禁脚本
 ```
+
+> ⚠️ **FINDING-B1 裁决（2026-10-06）**：测试根在 **`backend/tests/`**（真实仓库现状，rpb 30+ 测试都在此），**不建根级 `tests/`**。上面结构中的根级 `tests/` 已废弃。
 
 ---
 
